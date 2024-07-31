@@ -1,4 +1,4 @@
-# Simple pygame program 
+# Simple pygame program tutorial from realpython.com
 
 # Import the pygame module
 import pygame
