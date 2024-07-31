@@ -3,6 +3,9 @@
 # Import the pygame module
 import pygame
 
+# Import random for random numbers
+import random
+
 # Import pygame.locals for easier access to key locals
 from pygame.locals import (
         K_UP,
@@ -26,6 +29,49 @@ class Player(pygame.sprite.Sprite):
         self.surf = pygame.Surface((75, 25))
         self.surf.fill((255, 255, 255))
         self.rect = self.surf.get_rect()
+    
+    # Move the sprite based on user keypresses
+    def update(self, pressed_keys):
+        if pressed_keys[K_UP]:
+            self.rect.move_ip(0, -5)
+        if pressed_keys[K_DOWN]:
+            self.rect.move_ip(0, 5)
+        if pressed_keys[K_LEFT]:
+            self.rect.move_ip(-5, 0)
+        if pressed_keys[K_RIGHT]:
+            self.rect.move_ip(5, 0)
+
+        # Keep player on the screen
+        if self.rect.left < 0:
+            self.rect.left = 0
+        if self.rect.right > SCREEN_WIDTH:
+            self.rect.right = SCREEN_WIDTH
+        if self.rect.top <= 0:
+            self.rect.top = 0
+        if self.rect.bottom >= SCREEN_HEIGHT:
+            self.rect.bottom = SCREEN_HEIGHT
+
+# Define the enemy object by extending pygame.sprite.Sprite# The surface you draw on the screen is now an attribute of 'enemy'
+class Enemy(pygame.sprite.Sprite):
+    def __init__(self):
+        super(Enemy, self).__init__()
+        self.surf = pygame.Surface((20, 10))
+        self.surf.fill((255, 255, 255))
+        self.rect = self.surf.get_rect(
+                center=(
+                    random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 100),
+                    random.randint(0, SCREEN_HEIGHT),
+                )
+        )
+        self.speed = random.randint(5, 20)
+
+    # Move the sprite based on speed
+    # Remove the sprite when it passes the left edge of the screen
+    def update(self):
+        self.rect.move_ip(-self.speed, 0)
+        if self.rect.right < 0:
+            self.kill()
+
 
 # Initialize pygame 
 pygame.init()
@@ -36,6 +82,13 @@ screen = pygame.display.set_mode([SCREEN_WIDTH, SCREEN_HEIGHT])
 
 # Instantiate player. Right now, this is just a rectangle.
 player = Player()
+
+#Create groups to hold enemy sprites and all sprites
+# - enemies is used for collision detection and position updates
+# - all_sprites is used for rendering
+enemies = pygame.sprite.Group()
+all_sprites = pygame.sprite.Group()
+all_sprites.add(player)
 
 # Variable to keep the main loop running 
 running = True
@@ -54,11 +107,18 @@ while running:
         elif event.type == QUIT:
             running = False
 
+    # Get the set of keys pressed and check for user input
+    pressed_keys = pygame.key.get_pressed()
+
+    # Update the player sprite based on user keypresses
+    player.update(pressed_keys)
+
     # Fill the screen with black
     screen.fill((0, 0, 0))
 
-    # Draw the player on the screen
-    screen.blit(player.surf, (SCREEN_WIDTH/2, SCREEN_HEIGHT/2))
+    # Draw all sprites
+    for entity in all_sprites:
+        screen.blit(entity.surf, entity.rect)
     
     # Update the display
     pygame.display.flip()
@@ -68,16 +128,11 @@ while running:
 
     # Give the surface a color to separate it from the background
     surf.fill((0, 0, 0))
-    rect = surf.get_rect()
+    
+    # Draw the player on the screen
+    screen.blit(player.surf, player.rect)
 
-    #Put the center of surf at the center of the display
-    surf_center = (
-            (SCREEN_WIDTH-surf.get_width())/2,
-            (SCREEN_HEIGHT-surf.get_height())/2
-    )
-
-    # Draw surf at the new coordinates
-    screen.blit(surf, surf_center)
+    # Update the display
     pygame.display.flip()
 
 # Done! Time to quit.
